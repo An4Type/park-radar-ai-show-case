@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f1f2f4">
+    <title>Park Radar · Vision demo</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 2.5 28 9.4v13.2L16 29.5 4 22.6V9.4L16 2.5Z" fill="currentColor" opacity=".17"/><path d="M11.5 22V10h5.2a4.2 4.2 0 0 1 0 8.4h-5.2" stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/><path d="m16 2.5 12 6.9v13.2l-12 6.9-12-6.9V9.4l12-6.9Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <p class="eyebrow">PARK RADAR</p>
+            <h1>Vision demo</h1>
+          </div>
+        </div>
+        <div class="top-status" aria-live="polite">
+          <span class="live-dot" id="liveDot"></span>
+          <span id="topStatus">Connecting</span>
+          <span class="status-separator">·</span>
+          <span id="intervalLabel">1 min refresh</span>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Computer vision demo">
+        <section class="monitor-card card" aria-labelledby="feedTitle">
+          <header class="card-header">
+            <div>
+              <p class="eyebrow">LIVE VISION FEED</p>
+              <h2 id="feedTitle">Live camera frame</h2>
+            </div>
+            <div class="frame-state" id="frameState">Loading</div>
+          </header>
+
+          <div class="stage" id="stage">
+            <div class="scan-grid" aria-hidden="true"></div>
+            <div class="frame-placeholder" id="framePlaceholder">
+              <span class="spinner" aria-hidden="true"></span>
+              <p id="placeholderText">Loading first frame…</p>
+            </div>
+            <img id="visionFrame" class="vision-frame" alt="Camera frame with highlighted parking areas" hidden>
+            <div class="stage-badge"><span class="badge-dot"></span><span id="modeLabel">VISION MASK</span></div>
+            <button class="refresh-button" id="refreshButton" type="button" title="Refresh frame">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <footer class="monitor-footer">
+            <button class="source-preview" id="sourceToggle" type="button" aria-pressed="false">
+              <span class="source-image-wrap"><img id="rawFrame" alt="Original camera frame" hidden></span>
+              <span><strong id="toggleTitle">Show original</strong><small>source frame</small></span>
+            </button>
+            <div class="frame-meta">
+              <span class="meta-label">Captured</span>
+              <strong id="capturedAt">—</strong>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="explain-card card" aria-labelledby="ideaTitle">
+          <header class="explain-header">
+            <p class="eyebrow">HOW IT WORKS</p>
+            <h2 id="ideaTitle">See only the parking areas.</h2>
+            <p class="lead">Frame → mask → vision</p>
+          </header>
+
+          <ol class="pipeline">
+            <li>
+              <span class="step-number">01</span>
+              <div><strong>Capture</strong><p id="captureInterval">Every minute</p></div>
+            </li>
+            <li>
+              <span class="step-number">02</span>
+              <div><strong>Focus</strong><p>Mask everything else</p></div>
+            </li>
+            <li>
+              <span class="step-number">03</span>
+              <div><strong>Count</strong><p>Vision checks marked zones</p></div>
+            </li>
+          </ol>
+
+          <section class="areas-section" aria-labelledby="areasTitle">
+            <div class="areas-heading"><h3 id="areasTitle">Active zones</h3><span id="areasCount">0 zones</span></div>
+            <div class="area-chips" id="areaChips"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
