@@ -23,6 +23,7 @@ export class FrameService {
     this.timer = null;
     this.running = false;
     this.inFlight = null;
+    this.originalFrame = null;
     this.visionFrame = null;
     this.snapshot = {
       status: 'starting',
@@ -42,6 +43,10 @@ export class FrameService {
 
   getVisionFrame() {
     return this.visionFrame;
+  }
+
+  getOriginalFrame() {
+    return this.originalFrame;
   }
 
   async start() {
@@ -111,6 +116,7 @@ export class FrameService {
       // polygons, cyan contours, and white area labels. It also makes masked zoom crops,
       // just as the worker would before asking a vision model.
       const { frame } = await prepareInputs(this.browser, captured.png, this.camera.parkingAreas);
+      this.originalFrame = captured.png;
       this.visionFrame = frame;
       this.snapshot = {
         ...this.snapshot,

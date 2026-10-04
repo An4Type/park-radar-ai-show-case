@@ -3,6 +3,7 @@ import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRuntimeConfig, portFromEnv } from './config.js';
+import { createCorsMiddleware } from './cors.js';
 import { FrameService } from './frame-service.js';
 
 const projectDir = fileURLToPath(new URL('..', import.meta.url));
@@ -12,6 +13,7 @@ const host = process.env.HOST?.trim() || '0.0.0.0';
 
 const app = express();
 app.disable('x-powered-by');
+app.use(createCorsMiddleware());
 app.use((_request, response, next) => {
   response.set({
     'Cache-Control': 'no-store',
@@ -38,11 +40,13 @@ app.get('/api/detection', (request, response) => {
     // The latest completed detection remains available while a fresh capture is queued.
     void frameService.refreshNow();
   }
+  const originalFrame = frameService?.getOriginalFrame();
   const visionFrame = frameService?.getVisionFrame();
   const status = state.status === 'ready' ? 200 : state.status === 'error' ? 503 : 202;
   response.status(status).json({
     ...state,
     image: visionFrame ? `data:image/png;base64,${visionFrame.toString('base64')}` : null,
+    originalImage: originalFrame ? `data:image/png;base64,${originalFrame.toString('base64')}` : null,
   });
 });
 
