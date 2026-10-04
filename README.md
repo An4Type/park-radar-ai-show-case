@@ -21,13 +21,7 @@ There is no served frontend or demo feed. A configured external source is never 
 
 The `park-radar-showcase` repository reads this endpoint from its browser UI. For local development it uses `http://localhost:3000/api/detection` by default: start this API, then run the showcase with `npx wrangler dev`.
 
-When both applications are deployed, set `apiUrl` in the showcase's `public/config.js` to this API's public `/api/detection` URL. The endpoint is read-only and allows browser requests from every origin by default. Restrict it in production with the exact deployed showcase origin (no trailing slash):
-
-```bash
-CORS_ORIGINS=https://your-showcase.workers.dev npm start
-```
-
-Multiple origins, including a local development URL, can be comma-separated.
+When both applications are deployed, set `apiUrl` in the showcase's `public/config.js` to this API's public `/api/detection` URL. The endpoint is read-only and always includes a wildcard CORS policy, so the local showcase can call it directly.
 
 ## External camera
 
