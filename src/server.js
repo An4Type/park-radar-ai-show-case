@@ -5,9 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { createRuntimeConfig, portFromEnv } from './config.js';
 import { FrameService } from './frame-service.js';
 
-const here = fileURLToPath(new URL('..', import.meta.url));
-const publicDir = resolve(here, 'public');
-const runtimeDir = resolve(here, '.runtime');
+const projectDir = fileURLToPath(new URL('..', import.meta.url));
+const runtimeDir = resolve(projectDir, '.runtime');
 const port = portFromEnv();
 const host = process.env.HOST?.trim() || '0.0.0.0';
 
@@ -25,11 +24,9 @@ app.use((_request, response, next) => {
 let frameService = null;
 let config = null;
 
-app.get('/demo-feed', (_request, response) => {
-  response.sendFile(resolve(publicDir, 'demo-feed.html'));
-});
-
-app.get('/api/status', (_request, response) => {
+// This service intentionally exposes one API resource. The annotated PNG is embedded
+// in its JSON response so a client needs no separate status, image, or refresh routes.
+app.get('/api/detection', (request, response) => {
   const state = frameService?.getState() ?? {
     status: 'starting',
     version: 0,
@@ -37,47 +34,24 @@ app.get('/api/status', (_request, response) => {
     areas: [],
     intervalMs: config?.intervalMs ?? 5000,
   };
-  response.json(state);
-});
-
-app.get('/api/frame/:kind', (request, response) => {
-  const kind = request.params.kind;
-  if (!['raw', 'vision'].includes(kind)) {
-    return response.status(404).json({ error: 'UNKNOWN_FRAME', message: 'Use raw or vision.' });
+  if (request.query.refresh === 'true' && frameService) {
+    // The latest completed detection remains available while a fresh capture is queued.
+    void frameService.refreshNow();
   }
-  const frame = frameService?.getFrame(kind);
-  if (!frame) {
-    return response.status(503).json({ error: 'FRAME_NOT_READY', message: frameService?.getState().message ?? 'Frame is not ready.' });
-  }
-  response.type('png').send(frame);
-});
-
-app.post('/api/refresh', async (_request, response) => {
-  if (!frameService) return response.status(503).json({ error: 'WORKER_NOT_READY' });
-  // Do not hold the HTTP request open while a remote stream is loading.
-  void frameService.refreshNow();
-  response.status(202).json({ accepted: true, message: 'Refresh queued.' });
-});
-
-app.get('/health', (_request, response) => {
-  const state = frameService?.getState();
-  response.status(state?.status === 'error' ? 503 : 200).json({
-    status: state?.status === 'error' ? 'degraded' : 'ok',
-    frame: state?.status ?? 'starting',
-    version: state?.version ?? 0,
+  const visionFrame = frameService?.getVisionFrame();
+  const status = state.status === 'ready' ? 200 : state.status === 'error' ? 503 : 202;
+  response.status(status).json({
+    ...state,
+    image: visionFrame ? `data:image/png;base64,${visionFrame.toString('base64')}` : null,
   });
 });
-
-app.use(express.static(publicDir, { index: 'index.html', etag: false, maxAge: 0 }));
 
 const server = app.listen(port, host);
 await once(server, 'listening');
 const address = server.address();
 const boundPort = typeof address === 'object' && address ? address.port : port;
-const localFeedUrl = `http://127.0.0.1:${boundPort}/demo-feed`;
-
 try {
-  config = createRuntimeConfig(process.env, { localFeedUrl });
+  config = createRuntimeConfig(process.env);
   frameService = new FrameService({
     camera: config.camera,
     intervalMs: config.intervalMs,
@@ -88,7 +62,7 @@ try {
     event: 'started',
     url: `http://localhost:${boundPort}`,
     intervalSeconds: config.intervalMs / 1000,
-    source: config.usingBuiltInFeed ? 'built-in-demo-feed' : config.camera.url,
+    source: config.camera.url,
     areas: config.areas.map((area) => area.id),
   }));
   void frameService.start();

@@ -74,11 +74,8 @@ function makeCamera({ id, name, url, mediaType, selector, readySelector, viewpor
   }])[0];
 }
 
-/**
- * Build the runtime configuration after Express has bound a port. The built-in canvas
- * feed is intentional: it makes the demo launchable without relying on a public stream.
- */
-export function createRuntimeConfig(env = process.env, { localFeedUrl }) {
+/** Build the runtime configuration for one configured parking camera. */
+export function createRuntimeConfig(env = process.env) {
   const port = positiveInteger(env.PORT, 'PORT', { min: 1, max: 65535, fallback: 3000 });
   const intervalMs = captureIntervalMs(env);
   const timeoutMs = positiveInteger(env.CAMERA_TIMEOUT_MS, 'CAMERA_TIMEOUT_MS', { min: 1000, max: 120000, fallback: 15000 });
@@ -88,39 +85,24 @@ export function createRuntimeConfig(env = process.env, { localFeedUrl }) {
   };
   const areas = areasFromEnv(env.CAMERA_AREAS_JSON);
   const configuredUrl = optionalString(env.CAMERA_URL);
-  const usingBuiltInFeed = !configuredUrl;
+  if (!configuredUrl) throw new Error('CAMERA_URL is required');
 
-  const builtInCamera = makeCamera({
-    id: 'demo-feed',
-    name: 'Built-in parking camera feed',
-    url: localFeedUrl,
-    mediaType: 'page',
-    selector: '#camera-feed',
-    readySelector: '#camera-feed',
+  const camera = makeCamera({
+    id: optionalString(env.CAMERA_ID) ?? 'parking-camera',
+    name: optionalString(env.CAMERA_NAME) ?? 'Parking camera',
+    url: configuredUrl,
+    mediaType: optionalString(env.CAMERA_MEDIA_TYPE) ?? 'video',
+    selector: optionalString(env.CAMERA_SELECTOR),
+    readySelector: optionalString(env.CAMERA_READY_SELECTOR),
     viewport,
-    timeoutMs: 5000,
+    timeoutMs,
     areas,
   });
-
-  const camera = usingBuiltInFeed
-    ? builtInCamera
-    : makeCamera({
-      id: optionalString(env.CAMERA_ID) ?? 'external-camera',
-      name: optionalString(env.CAMERA_NAME) ?? 'External parking camera',
-      url: configuredUrl,
-      mediaType: optionalString(env.CAMERA_MEDIA_TYPE) ?? 'video',
-      selector: optionalString(env.CAMERA_SELECTOR),
-      readySelector: optionalString(env.CAMERA_READY_SELECTOR),
-      viewport,
-      timeoutMs,
-      areas,
-    });
 
   return {
     port,
     intervalMs,
     camera,
-    usingBuiltInFeed,
     areas,
   };
 }

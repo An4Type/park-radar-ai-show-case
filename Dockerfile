@@ -8,8 +8,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --chown=pwuser:pwuser src ./src
-COPY --chown=pwuser:pwuser public ./public
-# The demo deliberately imports the camera worker's proven capture/masking code.
+# The API imports the camera worker's proven capture/masking code.
 COPY --chown=pwuser:pwuser camera-worker/src ./camera-worker/src
 
 RUN mkdir -p /app/.runtime && chown pwuser:pwuser /app/.runtime

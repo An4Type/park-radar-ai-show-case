@@ -10,7 +10,7 @@ const retryMessage = (intervalMs) => intervalMs === 60000
   : `Camera unavailable. Retrying in ${Math.round(intervalMs / 1000)} seconds.`;
 
 /**
- * Captures a frame and retains only the latest raw and vision-focused PNG in memory.
+ * Captures a frame and retains only the latest vision-focused PNG in memory.
  * The visual transform is camera-worker's prepareInputs(), not a client-side imitation.
  */
 export class FrameService {
@@ -23,7 +23,6 @@ export class FrameService {
     this.timer = null;
     this.running = false;
     this.inFlight = null;
-    this.rawFrame = null;
     this.visionFrame = null;
     this.snapshot = {
       status: 'starting',
@@ -41,8 +40,8 @@ export class FrameService {
     return { ...this.snapshot, areas: [...this.snapshot.areas] };
   }
 
-  getFrame(kind) {
-    return kind === 'raw' ? this.rawFrame : kind === 'vision' ? this.visionFrame : null;
+  getVisionFrame() {
+    return this.visionFrame;
   }
 
   async start() {
@@ -112,7 +111,6 @@ export class FrameService {
       // polygons, cyan contours, and white area labels. It also makes masked zoom crops,
       // just as the worker would before asking a vision model.
       const { frame } = await prepareInputs(this.browser, captured.png, this.camera.parkingAreas);
-      this.rawFrame = captured.png;
       this.visionFrame = frame;
       this.snapshot = {
         ...this.snapshot,

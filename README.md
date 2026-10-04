@@ -1,20 +1,21 @@
-# Park Radar — Vision Demo
+# Park Radar — Detection API
 
-One-screen Express demo of the `camera-worker` vision input: a new frame every minute, masked parking areas, and cyan area labels.
+Backend-only Express service for the `camera-worker` vision input. It captures one configured parking-camera frame, masks the configured areas, and exposes the latest annotated frame through one API route.
 
 ## Run
 
-Requires Node.js 22+.
+Requires Node.js 22+ and a configured camera source.
 
 ```bash
 npm install
 npx playwright install chromium
+cp .env.example .env
 npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Call `GET http://localhost:3000/api/detection`. It returns `202` while the first capture is pending, `200` with the latest annotated PNG as a data URI in `image` when ready, or `503` if capture failed. Add `?refresh=true` to queue a fresh capture while receiving the latest result.
 
-The default built-in animated feed keeps the demo usable without an external camera or an API key. A configured external source is never replaced with a fake frame: the UI shows an error and retries it every minute.
+There is no served frontend or demo feed. A configured external source is never replaced with a fake frame; the API returns its capture error and retries at the configured interval.
 
 ## External camera
 
